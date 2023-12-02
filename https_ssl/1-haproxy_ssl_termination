@@ -32,19 +32,14 @@ defaults
 	errorfile 502 /etc/haproxy/errors/502.http
 	errorfile 503 /etc/haproxy/errors/503.http
 	errorfile 504 /etc/haproxy/errors/504.http
-frontend lb_front
-        bind *:80
-        default_backend lb_back
+frontend lb-frontend.
+    bind *:443 ssl crt /etc/letsencrypt/live/buycynthia.tech/my_cert.pem
+    http-request add-header X-Forwarded-Proto https
+    http-request redirect scheme https if !{ ssl_fc }
+    default_backend lb-backend
 
-backend lb_back
-        balance roundrobin
-        server 5894-web-01 54.160.201.235 check
-        server 5894-web-02 3.87.127.32 check
-frontend lb_front
-        bind *:80
-        default_backend lb_back
-
-backend lb_back
-        balance roundrobin
-        server 5894-web-01 54.160.201.235:80 check
-        server 5894-web-02 3.87.127.32:80 check
+backend lb-backend
+    balance roundrobin
+    redirect scheme https if !{ ssl_fc }
+    server 5894-web-01 54.160.201.235
+    server 5894-web-02 3.87.127.32
